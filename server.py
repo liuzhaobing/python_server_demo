@@ -36,10 +36,8 @@ def call(request):
     sentences = []
     all_texts = list(request.texts)
     if len(all_texts) < 1:
-        return CmQsimSimilarResponse(code=1, reason="no text pair!", message="",
-                                     metadata=QsimSimilarResult(modelType=model_name,
-                                                                version=model_name,
-                                                                answers=[]))
+        return CmQsimSimilarResponse(code=500, reason="failed", message="",
+                                     metadata=QsimSimilarResult(modelType=model_name, answers=[]))
     for text_pair in request.texts:
         if text_pair.text_1 not in sentences:
             sentences.append(text_pair.text_1)
@@ -55,9 +53,8 @@ def call(request):
                               text_2=text_pair.text_2,
                               score=results[all_texts.index(text_pair)]) for text_pair in request.texts]
 
-    response = CmQsimSimilarResponse(code=0, reason="", message="", metadata=QsimSimilarResult(modelType=model_name,
-                                                                                               version=model_name,
-                                                                                               answers=answers))
+    response = CmQsimSimilarResponse(code=200, reason="success", message="",
+                                     metadata=QsimSimilarResult(modelType=model_name, answers=answers))
     create_task(asyncf(logging.info,
                        f"response: {json.dumps(json.loads(json_format.MessageToJson(response)), ensure_ascii=False)}"))
     return response
