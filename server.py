@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import json
 import logging
 import asyncio
 import threading
@@ -9,7 +8,7 @@ import grpc
 from asyncio import create_task
 from concurrent import futures
 from functools import wraps
-from model.models import QQSimNew
+from model.models import Model
 from google.protobuf import json_format
 from flask import Flask, has_request_context, copy_current_request_context, request, make_response
 from gevent import pywsgi
@@ -19,8 +18,6 @@ from api.qqsim_pb2_grpc import QqsimService
 from api import qqsim_pb2_grpc
 
 app = Flask(__name__)
-model = QQSimNew()
-model_name = model.model_name
 max_workers = 40
 
 
@@ -31,13 +28,12 @@ class ModelServer(QqsimService):
 
 
 def call(request):
-    create_task(asyncf(logging.info,
-                       f"request: {json.dumps(json.loads(json_format.MessageToJson(request)), ensure_ascii=False)}"))
+    create_task(asyncf(logging.info, f"request: {json_format.MessageToDict(request)}"))
     sentences = []
     all_texts = list(request.texts)
     if len(all_texts) < 1:
         return CmQsimSimilarResponse(code=500, reason="failed", message="",
-                                     metadata=QsimSimilarResult(modelType=model_name, answers=[]))
+                                     metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=[]))
     for text_pair in request.texts:
         if text_pair.text_1 not in sentences:
             sentences.append(text_pair.text_1)
@@ -45,18 +41,18 @@ def call(request):
             sentences.append(text_pair.text_2)
     start_time = time.time()
     create_task(asyncf(logging.info, f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"))
-    results = model.calculate_similarity(sentences)
+    sentence_embeddings = Model.calculate_sentence_embeddings(sentences)
+
+    answers = [TextPairRspMsg(id=text_pair.id, text_1=text_pair.text_1, text_2=text_pair.text_2,
+                              score=Model.calculate_cosine(sentence_embeddings[sentences.index(text_pair.text_1)],
+                                                           sentence_embeddings[sentences.index(text_pair.text_2)]))
+               for text_pair in request.texts]
     cost = time.time() - start_time
     create_task(asyncf(logging.info, f"duration: {int(1000 * cost)}"))
-    answers = [TextPairRspMsg(id=text_pair.id,
-                              text_1=text_pair.text_1,
-                              text_2=text_pair.text_2,
-                              score=results[all_texts.index(text_pair)]) for text_pair in request.texts]
 
     response = CmQsimSimilarResponse(code=200, reason="success", message="",
-                                     metadata=QsimSimilarResult(modelType=model_name, answers=answers))
-    create_task(asyncf(logging.info,
-                       f"response: {json.dumps(json.loads(json_format.MessageToJson(response)), ensure_ascii=False)}"))
+                                     metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=answers))
+    create_task(asyncf(logging.info, f"response: {json_format.MessageToDict(response)}"))
     return response
 
 
@@ -93,8 +89,8 @@ def run_async(func):
 @app.route("/qqsim", methods=["POST"])
 @run_async
 async def model_server():
-    req = json_format.Parse(json.dumps(json.loads(request.get_data()), indent=4), CmQsimSimilarRequest())
-    return make_response(json.dumps(json.loads(json_format.MessageToJson(call(req))), ensure_ascii=False))
+    req = json_format.ParseDict(request.get_json(), CmQsimSimilarRequest())
+    return make_response(json_format.MessageToDict(call(req)))
 
 
 async def grpc_serve() -> None:
