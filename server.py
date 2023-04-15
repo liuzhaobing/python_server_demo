@@ -28,10 +28,8 @@ class ModelServer(QqsimService):
 
 
 def call(request):
-    create_task(asyncf(logging.info, f"request: {json_format.MessageToDict(request)}"))
     sentences = []
-    all_texts = list(request.texts)
-    if len(all_texts) < 1:
+    if not request.texts:
         return CmQsimSimilarResponse(code=500, reason="failed", message="",
                                      metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=[]))
     for text_pair in request.texts:
@@ -40,19 +38,17 @@ def call(request):
         if text_pair.text_2 not in sentences:
             sentences.append(text_pair.text_2)
     start_time = time.time()
-    create_task(asyncf(logging.info, f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"))
     sentence_embeddings = Model.calculate_sentence_embeddings(sentences)
-
     answers = [TextPairRspMsg(id=text_pair.id, text_1=text_pair.text_1, text_2=text_pair.text_2,
                               score=Model.calculate_cosine(sentence_embeddings[sentences.index(text_pair.text_1)],
                                                            sentence_embeddings[sentences.index(text_pair.text_2)]))
                for text_pair in request.texts]
-    cost = time.time() - start_time
-    create_task(asyncf(logging.info, f"duration: {int(1000 * cost)}"))
-
     response = CmQsimSimilarResponse(code=200, reason="success", message="",
                                      metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=answers))
-    create_task(asyncf(logging.info, f"response: {json_format.MessageToDict(response)}"))
+    create_task(asyncf(logging.info, f"duration: {int(1000 * (time.time() - start_time))} "
+                                     f"response: {json_format.MessageToDict(response)} "
+                                     f"request: {json_format.MessageToDict(request)} "
+                                     f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"))
     return response
 
 
