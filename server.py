@@ -66,7 +66,7 @@ class ModelServer(QqsimService):
 def call(request):
     sentences = []
     if not request.texts:
-        logging.error(f"invalid request without text pair {request}")
+        logging.error(f"invalid request without text pair {json_format.MessageToDict(request)}")
         return CmQsimSimilarResponse(code=500, reason="failed", message="",
                                      metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=[]))
     for text_pair in request.texts:
