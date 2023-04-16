@@ -1,14 +1,13 @@
 # -*- coding:utf-8 -*-
 import logging
+import logging.config
 import asyncio
 import threading
 import time
 import grpc
 
-from asyncio import create_task
 from concurrent import futures
 from functools import wraps
-from model.models import Model
 from google.protobuf import json_format
 from flask import Flask, has_request_context, copy_current_request_context, request, make_response
 from gevent import pywsgi
@@ -20,6 +19,43 @@ from api import qqsim_pb2_grpc
 app = Flask(__name__)
 max_workers = 40
 
+logging.config.dictConfig(
+    {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {
+                "class": "logging.Formatter",
+                "format": "%(asctime)s - [%(levelname)s][%(filename)s][%(funcName)s][%(lineno)d]: %(message)s"
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "INFO",
+                "formatter": "simple",
+                "stream": "ext://sys.stdout",
+            },
+            "file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "level": "INFO",
+                "formatter": "simple",
+                "filename": "server.log",
+                "maxBytes": 10485760,
+                "backupCount": 50,
+                "encoding": "utf8",
+            }
+        },
+        "loggers": {},
+        "root": {
+            "level": "INFO",
+            "handlers": ["console", "file"]
+        },
+    }
+)
+
+from model.models import Model
+
 
 class ModelServer(QqsimService):
     async def CmQqSimSimilar(self, request, target, options=(), channel_credentials=None, call_credentials=None,
@@ -30,6 +66,7 @@ class ModelServer(QqsimService):
 def call(request):
     sentences = []
     if not request.texts:
+        logging.error(f"invalid request without text pair {request}")
         return CmQsimSimilarResponse(code=500, reason="failed", message="",
                                      metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=[]))
     for text_pair in request.texts:
@@ -45,15 +82,11 @@ def call(request):
                for text_pair in request.texts]
     response = CmQsimSimilarResponse(code=200, reason="success", message="",
                                      metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=answers))
-    create_task(asyncf(logging.info, f"duration: {int(1000 * (time.time() - start_time))} "
-                                     f"response: {json_format.MessageToDict(response)} "
-                                     f"request: {json_format.MessageToDict(request)} "
-                                     f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}"))
+    logging.info(f"duration: {int(1000 * (time.time() - start_time))} "
+                 f"response: {json_format.MessageToDict(response)} "
+                 f"request: {json_format.MessageToDict(request)} "
+                 f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
     return response
-
-
-async def asyncf(func, msg, *args, **kwargs):
-    func(msg, *args, **kwargs)
 
 
 def run_async(func):
@@ -118,5 +151,4 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     main()

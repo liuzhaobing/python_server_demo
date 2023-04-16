@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import logging
 import torch
 from transformers import AutoTokenizer, AutoModel
 
@@ -12,7 +13,7 @@ class Model:
     MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     para_tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     para_model = AutoModel.from_pretrained(MODEL_NAME).to(device)
-    print(f"load model [{MODEL_NAME}]")
+    logging.info(f"load model [{MODEL_NAME}]")
 
     @classmethod
     def calculate_sentence_embeddings(cls, sentences):
