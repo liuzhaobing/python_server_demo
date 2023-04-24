@@ -3,7 +3,7 @@
 import grpc
 
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
-import api.qqsim_pb2 as qqsim__pb2
+import proto.qqsim_pb2 as qqsim__pb2
 
 
 class QqsimServiceStub(object):

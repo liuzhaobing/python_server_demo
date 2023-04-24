@@ -12,9 +12,9 @@ from google.protobuf import json_format
 from flask import Flask, has_request_context, copy_current_request_context, request, make_response
 from gevent import pywsgi
 
-from api.qqsim_pb2 import CmQsimSimilarResponse, QsimSimilarResult, TextPairRspMsg, CmQsimSimilarRequest
-from api.qqsim_pb2_grpc import QqsimService
-from api import qqsim_pb2_grpc
+from proto.qqsim_pb2 import CmQsimSimilarResponse, QsimSimilarResult, TextPairRspMsg, CmQsimSimilarRequest
+from proto.qqsim_pb2_grpc import QqsimService
+from proto import qqsim_pb2_grpc
 
 app = Flask(__name__)
 max_workers = 40
