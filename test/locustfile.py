@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import math
 import re
 import time
 from typing import Callable, Any
@@ -6,7 +7,7 @@ from typing import Callable, Any
 import grpc
 import grpc.experimental.gevent as grpc_gevent
 from google.protobuf import json_format
-from locust import User, task, run_single_user
+from locust import User, task, run_single_user, LoadTestShape
 from locust.env import Environment
 from locust.exception import LocustError
 from grpc_interceptor import ClientInterceptor
@@ -98,6 +99,26 @@ class MyGrpcUser(GrpcUser):
         texts = [json_format.ParseDict(pair, qqsim_pb2.TextPairReqMsg()) for pair in data]
         req = qqsim_pb2.CmQsimSimilarRequest(agent_id=1, trace_id="1", robot_name="小达", texts=texts)
         self.stub.CmQqSimSimilar(req)
+
+
+class MyCustomShape(LoadTestShape):
+    step_time = 120
+    step_load = 1
+    spawn_rate = 1
+    time_limit = 3600
+    """
+    step_time - - 逐步加载时间长度
+    step_load - - 用户每一步增加的量
+    spawn_rate - - 用户在每一步的停止 / 启动的多少用户数
+    time_limit - - 时间限制压测的执行时长
+    """
+
+    def tick(self):
+        run_time = self.get_run_time()
+        if run_time < self.time_limit:
+            current_step = math.floor(run_time / self.step_time) + 1
+            return current_step * self.step_load, self.spawn_rate
+        return None
 
 
 if __name__ == '__main__':
