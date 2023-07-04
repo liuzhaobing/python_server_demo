@@ -1,7 +1,10 @@
 # -*- coding:utf-8 -*-
 import logging
+from typing import Union, List
+
+import numpy
 import torch
-from transformers import AutoTokenizer, AutoModel
+from sentence_transformers import SentenceTransformer
 
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
@@ -10,33 +13,36 @@ else:
 
 
 class Model:
-    MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-    para_tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    para_model = AutoModel.from_pretrained(MODEL_NAME).to(device)
+    MODEL_NAME = "GanymedeNil/text2vec-large-chinese"
+    model = SentenceTransformer(MODEL_NAME,
+                                device="cuda" if torch.cuda.is_available() else "cpu",
+                                cache_folder=".huggingface_cache")
     logging.info(f"load model [{MODEL_NAME}]")
 
-    @classmethod
-    def calculate_sentence_embeddings(cls, sentences):
-        encoded_input = cls.para_tokenizer(sentences, padding=True, truncation=True, return_tensors='pt').to(device)
-        # Compute token embeddings
-        with torch.no_grad():
-            model_output = cls.para_model(**encoded_input)
-        # Perform pooling. In this case, max pooling.
-        sentence_embeddings = cls.mean_pooling(model_output, encoded_input['attention_mask'])
-        return sentence_embeddings
+    def embedding(self, sentence: Union[str, List[str]]):
+        """
+        Get sentence embedding
+        :param sentence: sentence
+        :return: sentence embedding
+        """
+        return self.model.encode(sentence)
 
-    @staticmethod
-    def mean_pooling(model_output, attention_mask):
-        token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-
-    @classmethod
-    def calculate_cosine(cls, sentence_embedding1, sentence_embedding2):
+    def calculate_cosine(self, sentence_embedding1, sentence_embedding2):
+        """ Calculate cosine similarity between two vectors
+        :param sentence_embedding1: Tensor 1
+        :param sentence_embedding2: Tensor 2
+        :return: cosine similarity
+        """
+        if isinstance(sentence_embedding1, numpy.ndarray):
+            sentence_embedding1 = torch.from_numpy(sentence_embedding1)
+        if isinstance(sentence_embedding2, numpy.ndarray):
+            sentence_embedding2 = torch.from_numpy(sentence_embedding2)
         return torch.nn.functional.cosine_similarity(sentence_embedding1, sentence_embedding2, dim=0).item()
 
 
+model = Model()
+
 if __name__ == '__main__':
     sentences = ["介绍一下中国移动", "中国移动的介绍"]
-    embeddings = Model.calculate_sentence_embeddings(sentences)
-    print(Model.calculate_cosine(embeddings[0], embeddings[1]))
+    embeddings = model.embedding(sentences)
+    print(model.calculate_cosine(embeddings[0], embeddings[1]))

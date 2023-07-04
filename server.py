@@ -54,7 +54,7 @@ logging.config.dictConfig(
     }
 )
 
-from model.models import Model
+from model.models import model
 
 
 class ModelServer(QqsimService):
@@ -68,20 +68,20 @@ def call(request):
     if not request.texts:
         logging.error(f"invalid request without text pair {json_format.MessageToDict(request)}")
         return CmQsimSimilarResponse(code=500, reason="failed", message="",
-                                     metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=[]))
+                                     metadata=QsimSimilarResult(modelType=model.MODEL_NAME, answers=[]))
     for text_pair in request.texts:
         if text_pair.text_1 not in sentences:
             sentences.append(text_pair.text_1)
         if text_pair.text_2 not in sentences:
             sentences.append(text_pair.text_2)
     start_time = time.time()
-    sentence_embeddings = Model.calculate_sentence_embeddings(sentences)
+    sentence_embeddings = model.embedding(sentences)
     answers = [TextPairRspMsg(id=text_pair.id, text_1=text_pair.text_1, text_2=text_pair.text_2,
-                              score=Model.calculate_cosine(sentence_embeddings[sentences.index(text_pair.text_1)],
+                              score=model.calculate_cosine(sentence_embeddings[sentences.index(text_pair.text_1)],
                                                            sentence_embeddings[sentences.index(text_pair.text_2)]))
                for text_pair in request.texts]
     response = CmQsimSimilarResponse(code=200, reason="success", message="",
-                                     metadata=QsimSimilarResult(modelType=Model.MODEL_NAME, answers=answers))
+                                     metadata=QsimSimilarResult(modelType=model.MODEL_NAME, answers=answers))
     logging.info(f"duration: {int(1000 * (time.time() - start_time))} "
                  f"response: {json_format.MessageToDict(response)} "
                  f"request: {json_format.MessageToDict(request)} "
