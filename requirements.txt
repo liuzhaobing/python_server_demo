@@ -3,7 +3,5 @@ grpcio==1.47.0
 grpcio-tools==1.44.0
 Flask~=2.2.3
 gevent~=22.10.2
-transformers~=4.28.0
-pandas~=2.0.0
-torch~=2.0.0
+sentence_transformers
 grpc_interceptor

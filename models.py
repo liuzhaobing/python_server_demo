@@ -12,7 +12,7 @@ class Model:
         self.MODEL_NAME = model_name
         self.model = SentenceTransformer(self.MODEL_NAME,
                                          device="cuda" if torch.cuda.is_available() else "cpu",
-                                         cache_folder=".huggingface_cache")
+                                         cache_folder="huggingface_cache")
         logging.info(f"load model [{self.MODEL_NAME}]")
 
     def embedding(self, sentence: Union[str, List[str]]):
