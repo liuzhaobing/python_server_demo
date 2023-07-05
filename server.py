@@ -4,6 +4,8 @@ import logging.config
 import asyncio
 import threading
 import time
+from typing import Union
+
 import grpc
 
 from concurrent import futures
@@ -56,7 +58,22 @@ logging.config.dictConfig(
     }
 )
 
-from model.models import model
+from models import Models, Model
+
+default_model = "GanymedeNil/text2vec-large-chinese"
+
+
+def get_model(model_name) -> Union[Model, None]:
+    if not model_name:
+        model_name = default_model
+
+    if model_name not in [m.MODEL_NAME for m in Models]:
+        Models.append(Model(model_name))
+
+    for m in Models:
+        if m.MODEL_NAME == model_name:
+            return m
+    return None
 
 
 class ModelServer(QqsimService):
@@ -70,6 +87,12 @@ class ModelServer(QqsimService):
 
 
 def cosine_similarity(request):
+    model = get_model(request.model_name)
+    if not model:
+        logging.error(f"invalid model name {request.model_name}")
+        return CmQsimSimilarResponse(code=500, reason="failed", message="",
+                                     metadata=QsimSimilarResult(modelType=request.model_name, answers=[]))
+
     sentences = []
     if not request.texts:
         logging.error(f"invalid request without text pair {json_format.MessageToDict(request)}")
@@ -96,6 +119,12 @@ def cosine_similarity(request):
 
 
 def embedding(request):
+    model = get_model(request.model_name)
+
+    if not model:
+        logging.error(f"invalid model name {request.model_name}")
+        return CmQqSimSentenceResponse(code=500, reason="failed", message="", metadata=[])
+
     if not request.text_list:
         logging.error(f"invalid request without text list {json_format.MessageToDict(request)}")
         return CmQqSimSentenceResponse(code=500, reason="failed", message="", metadata=[])

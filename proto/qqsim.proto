@@ -14,10 +14,11 @@ service QqsimService {
 }
 
 message CmQsimSimilarRequest {
-  int32 agent_id = 1 [ json_name = "agent_id" ];
-  string trace_id = 2 [ json_name = "trace_id" ];
-  string robot_name = 3 [ json_name = "RobotName" ];
+  int32 agent_id = 1;
+  string trace_id = 2;
+  string robot_name = 3;
   repeated TextPairReqMsg texts = 4;
+  string model_name = 5;
 }
 
 message CmQqSimSentenceRequest {
@@ -25,6 +26,7 @@ message CmQqSimSentenceRequest {
   string trace_id = 2;
   string robot_name = 3;
   repeated string text_list = 4;
+  string model_name = 5;
 }
 
 message CmQqSimSentenceResponse {
@@ -46,9 +48,9 @@ message QqSimSentenceResult {
 
 message TextPairReqMsg {
   int32  id = 1 ;
-  string text_1 = 2 [ json_name = "text_1" ];
-  string text_2 = 3 [ json_name = "text_2" ];
-  float es_score = 4 [ json_name = "es_score" ];
+  string text_1 = 2;
+  string text_2 = 3;
+  float es_score = 4;
 
 }
 

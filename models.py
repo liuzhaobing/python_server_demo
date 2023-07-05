@@ -8,11 +8,12 @@ from sentence_transformers import SentenceTransformer
 
 
 class Model:
-    MODEL_NAME = "GanymedeNil/text2vec-large-chinese"
-    model = SentenceTransformer(MODEL_NAME,
-                                device="cuda" if torch.cuda.is_available() else "cpu",
-                                cache_folder=".huggingface_cache")
-    logging.info(f"load model [{MODEL_NAME}]")
+    def __init__(self, model_name):
+        self.MODEL_NAME = model_name
+        self.model = SentenceTransformer(self.MODEL_NAME,
+                                         device="cuda" if torch.cuda.is_available() else "cpu",
+                                         cache_folder=".huggingface_cache")
+        logging.info(f"load model [{self.MODEL_NAME}]")
 
     def embedding(self, sentence: Union[str, List[str]]):
         """
@@ -35,9 +36,6 @@ class Model:
         return torch.nn.functional.cosine_similarity(sentence_embedding1, sentence_embedding2, dim=0).item()
 
 
-model = Model()
-
-if __name__ == '__main__':
-    sentences = ["介绍一下中国移动", "中国移动的介绍"]
-    embeddings = model.embedding(sentences)
-    print(model.calculate_cosine(embeddings[0], embeddings[1]))
+Models = [
+    Model("GanymedeNil/text2vec-large-chinese")
+]

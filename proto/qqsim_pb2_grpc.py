@@ -3,7 +3,7 @@
 import grpc
 
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
-import proto.qqsim_pb2 as qqsim__pb2
+from proto import qqsim_pb2 as proto_dot_qqsim__pb2
 
 
 class QqsimServiceStub(object):
@@ -17,18 +17,18 @@ class QqsimServiceStub(object):
         """
         self.CmQqSimSimilar = channel.unary_unary(
                 '/qqsim.v1.QqsimService/CmQqSimSimilar',
-                request_serializer=qqsim__pb2.CmQsimSimilarRequest.SerializeToString,
-                response_deserializer=qqsim__pb2.CmQsimSimilarResponse.FromString,
+                request_serializer=proto_dot_qqsim__pb2.CmQsimSimilarRequest.SerializeToString,
+                response_deserializer=proto_dot_qqsim__pb2.CmQsimSimilarResponse.FromString,
                 )
         self.CmQqSimSentenceEncode = channel.unary_unary(
                 '/qqsim.v1.QqsimService/CmQqSimSentenceEncode',
-                request_serializer=qqsim__pb2.CmQqSimSentenceRequest.SerializeToString,
-                response_deserializer=qqsim__pb2.CmQqSimSentenceResponse.FromString,
+                request_serializer=proto_dot_qqsim__pb2.CmQqSimSentenceRequest.SerializeToString,
+                response_deserializer=proto_dot_qqsim__pb2.CmQqSimSentenceResponse.FromString,
                 )
         self.GetQqsimVersion = channel.unary_unary(
                 '/qqsim.v1.QqsimService/GetQqsimVersion',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=qqsim__pb2.VersionResponse.FromString,
+                response_deserializer=proto_dot_qqsim__pb2.VersionResponse.FromString,
                 )
 
 
@@ -58,18 +58,18 @@ def add_QqsimServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CmQqSimSimilar': grpc.unary_unary_rpc_method_handler(
                     servicer.CmQqSimSimilar,
-                    request_deserializer=qqsim__pb2.CmQsimSimilarRequest.FromString,
-                    response_serializer=qqsim__pb2.CmQsimSimilarResponse.SerializeToString,
+                    request_deserializer=proto_dot_qqsim__pb2.CmQsimSimilarRequest.FromString,
+                    response_serializer=proto_dot_qqsim__pb2.CmQsimSimilarResponse.SerializeToString,
             ),
             'CmQqSimSentenceEncode': grpc.unary_unary_rpc_method_handler(
                     servicer.CmQqSimSentenceEncode,
-                    request_deserializer=qqsim__pb2.CmQqSimSentenceRequest.FromString,
-                    response_serializer=qqsim__pb2.CmQqSimSentenceResponse.SerializeToString,
+                    request_deserializer=proto_dot_qqsim__pb2.CmQqSimSentenceRequest.FromString,
+                    response_serializer=proto_dot_qqsim__pb2.CmQqSimSentenceResponse.SerializeToString,
             ),
             'GetQqsimVersion': grpc.unary_unary_rpc_method_handler(
                     servicer.GetQqsimVersion,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=qqsim__pb2.VersionResponse.SerializeToString,
+                    response_serializer=proto_dot_qqsim__pb2.VersionResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -93,8 +93,8 @@ class QqsimService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/qqsim.v1.QqsimService/CmQqSimSimilar',
-            qqsim__pb2.CmQsimSimilarRequest.SerializeToString,
-            qqsim__pb2.CmQsimSimilarResponse.FromString,
+            proto_dot_qqsim__pb2.CmQsimSimilarRequest.SerializeToString,
+            proto_dot_qqsim__pb2.CmQsimSimilarResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -110,8 +110,8 @@ class QqsimService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/qqsim.v1.QqsimService/CmQqSimSentenceEncode',
-            qqsim__pb2.CmQqSimSentenceRequest.SerializeToString,
-            qqsim__pb2.CmQqSimSentenceResponse.FromString,
+            proto_dot_qqsim__pb2.CmQqSimSentenceRequest.SerializeToString,
+            proto_dot_qqsim__pb2.CmQqSimSentenceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -128,6 +128,6 @@ class QqsimService(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/qqsim.v1.QqsimService/GetQqsimVersion',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            qqsim__pb2.VersionResponse.FromString,
+            proto_dot_qqsim__pb2.VersionResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
