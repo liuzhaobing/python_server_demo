@@ -206,7 +206,7 @@ def run_async(func):
 
 @app.route("/get_distance", methods=["POST"])
 @run_async
-async def similarity_server():
+async def distance_server():
     req = json_format.ParseDict(request.get_json(), CmQsimSimilarRequest())
     return make_response(json_format.MessageToDict(L2sqr_distance(req)))
 
