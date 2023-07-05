@@ -6,11 +6,6 @@ import numpy
 import torch
 from sentence_transformers import SentenceTransformer
 
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-else:
-    device = torch.device("cpu")
-
 
 class Model:
     MODEL_NAME = "GanymedeNil/text2vec-large-chinese"

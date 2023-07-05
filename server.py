@@ -12,7 +12,9 @@ from google.protobuf import json_format
 from flask import Flask, has_request_context, copy_current_request_context, request, make_response
 from gevent import pywsgi
 
-from proto.qqsim_pb2 import CmQsimSimilarResponse, QsimSimilarResult, TextPairRspMsg, CmQsimSimilarRequest
+from proto.qqsim_pb2 import CmQsimSimilarResponse, QsimSimilarResult, TextPairRspMsg, CmQsimSimilarRequest, \
+    QqSimSentenceResult
+from proto.qqsim_pb2 import CmQqSimSentenceRequest, CmQqSimSentenceResponse
 from proto.qqsim_pb2_grpc import QqsimService
 from proto import qqsim_pb2_grpc
 
@@ -40,7 +42,7 @@ logging.config.dictConfig(
                 "class": "logging.handlers.RotatingFileHandler",
                 "level": "INFO",
                 "formatter": "simple",
-                "filename": "server.log",
+                "filename": "runtime/logs/server.log",
                 "maxBytes": 10485760,
                 "backupCount": 50,
                 "encoding": "utf8",
@@ -60,10 +62,14 @@ from model.models import model
 class ModelServer(QqsimService):
     async def CmQqSimSimilar(self, request, target, options=(), channel_credentials=None, call_credentials=None,
                              insecure=False, compression=None, wait_for_ready=None, timeout=None, metadata=None):
-        return call(request)
+        return cosine_similarity(request)
+
+    async def CmQqSimSentenceEncode(self, request, target, options=(), channel_credentials=None, call_credentials=None,
+                                    insecure=False, compression=None, wait_for_ready=None, timeout=None, metadata=None):
+        return embedding(request)
 
 
-def call(request):
+def cosine_similarity(request):
     sentences = []
     if not request.texts:
         logging.error(f"invalid request without text pair {json_format.MessageToDict(request)}")
@@ -86,6 +92,28 @@ def call(request):
                  f"response: {json_format.MessageToDict(response)} "
                  f"request: {json_format.MessageToDict(request)} "
                  f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
+    return response
+
+
+def embedding(request):
+    if not request.text_list:
+        logging.error(f"invalid request without text list {json_format.MessageToDict(request)}")
+        return CmQqSimSentenceResponse(code=500, reason="failed", message="", metadata=[])
+
+    start_time = time.time()
+
+    sentence_embeddings = model.embedding([text for text in request.text_list])
+
+    vector_list = [QqSimSentenceResult.VectorList(vector=item) for item in sentence_embeddings.tolist()]
+
+    response = CmQqSimSentenceResponse(code=200, reason="success", message="",
+                                       metadata=QqSimSentenceResult(modelType=model.MODEL_NAME, vectorList=vector_list))
+
+    logging.info(f"duration: {int(1000 * (time.time() - start_time))} "
+                 f"response: {json_format.MessageToDict(response)} "
+                 f"request: {json_format.MessageToDict(request)} "
+                 f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
+
     return response
 
 
@@ -115,11 +143,18 @@ def run_async(func):
     return _wrapper
 
 
-@app.route("/qqsim", methods=["POST"])
+@app.route("/get_similarity", methods=["POST"])
 @run_async
-async def model_server():
+async def similarity_server():
     req = json_format.ParseDict(request.get_json(), CmQsimSimilarRequest())
-    return make_response(json_format.MessageToDict(call(req)))
+    return make_response(json_format.MessageToDict(cosine_similarity(req)))
+
+
+@app.route("/get_embedding", methods=["POST"])
+@run_async
+async def embedding_server():
+    req = json_format.ParseDict(request.get_json(), CmQqSimSentenceRequest())
+    return make_response(json_format.MessageToDict(embedding(req)))
 
 
 async def grpc_serve() -> None:
