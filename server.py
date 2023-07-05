@@ -118,6 +118,38 @@ def cosine_similarity(request):
     return response
 
 
+def L2sqr_distance(request):
+    model = get_model(request.model_name)
+    if not model:
+        logging.error(f"invalid model name {request.model_name}")
+        return CmQsimSimilarResponse(code=500, reason="failed", message="",
+                                     metadata=QsimSimilarResult(modelType=request.model_name, answers=[]))
+
+    sentences = []
+    if not request.texts:
+        logging.error(f"invalid request without text pair {json_format.MessageToDict(request)}")
+        return CmQsimSimilarResponse(code=500, reason="failed", message="",
+                                     metadata=QsimSimilarResult(modelType=model.MODEL_NAME, answers=[]))
+    for text_pair in request.texts:
+        if text_pair.text_1 not in sentences:
+            sentences.append(text_pair.text_1)
+        if text_pair.text_2 not in sentences:
+            sentences.append(text_pair.text_2)
+    start_time = time.time()
+    sentence_embeddings = model.embedding(sentences)
+    answers = [TextPairRspMsg(id=text_pair.id, text_1=text_pair.text_1, text_2=text_pair.text_2,
+                              score=model.fvec_L2sqr(sentence_embeddings[sentences.index(text_pair.text_1)],
+                                                     sentence_embeddings[sentences.index(text_pair.text_2)]))
+               for text_pair in request.texts]
+    response = CmQsimSimilarResponse(code=200, reason="success", message="",
+                                     metadata=QsimSimilarResult(modelType=model.MODEL_NAME, answers=answers))
+    logging.info(f"duration: {int(1000 * (time.time() - start_time))} "
+                 f"response: {json_format.MessageToDict(response)} "
+                 f"request: {json_format.MessageToDict(request)} "
+                 f"request time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
+    return response
+
+
 def embedding(request):
     model = get_model(request.model_name)
 
@@ -170,6 +202,13 @@ def run_async(func):
         return call_result.result()
 
     return _wrapper
+
+
+@app.route("/get_distance", methods=["POST"])
+@run_async
+async def similarity_server():
+    req = json_format.ParseDict(request.get_json(), CmQsimSimilarRequest())
+    return make_response(json_format.MessageToDict(L2sqr_distance(req)))
 
 
 @app.route("/get_similarity", methods=["POST"])

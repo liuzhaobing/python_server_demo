@@ -35,7 +35,19 @@ class Model:
             sentence_embedding2 = torch.from_numpy(sentence_embedding2)
         return torch.nn.functional.cosine_similarity(sentence_embedding1, sentence_embedding2, dim=0).item()
 
+    def fvec_L2sqr(self, x, y):
+        """ L2sqr distance between two vectors
+        :param x: vector 1
+        :param y: vector 2
+        :return: L2sqr distance
+        """
+        return numpy.sum(numpy.square(numpy.array(x) - numpy.array(y)))
+
 
 Models = [
     Model("GanymedeNil/text2vec-large-chinese")
 ]
+
+if __name__ == '__main__':
+    result = Models[0].fvec_L2sqr(Models[0].embedding("柳树是黄色的吧"), Models[0].embedding("柳树为什么是黄色的呢"))
+    print(result)
