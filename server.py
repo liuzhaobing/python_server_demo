@@ -194,7 +194,7 @@ async def grpc_serve() -> None:
         ('grpc.enable_retries', 1),
     ])
     qqsim_pb2_grpc.add_QqsimServiceServicer_to_server(ModelServer(), server)
-    listen_addr = '[::]:50051'
+    listen_addr = '[::]:50251'
     server.add_insecure_port(listen_addr)
     logging.info("Starting GRPC server on %s", listen_addr)
     await server.start()
@@ -202,7 +202,7 @@ async def grpc_serve() -> None:
 
 
 def flask_serve():
-    listener = ('0.0.0.0', 8091)
+    listener = ('0.0.0.0', 50252)
     server = pywsgi.WSGIServer(listener, app)
     logging.info("Starting HTTP server on %s", listener)
     server.serve_forever()

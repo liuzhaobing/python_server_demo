@@ -6,3 +6,4 @@ gevent~=22.10.2
 transformers~=4.28.0
 pandas~=2.0.0
 torch~=2.0.0
+grpc_interceptor
