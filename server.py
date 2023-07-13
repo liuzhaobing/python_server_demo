@@ -58,22 +58,17 @@ logging.config.dictConfig(
     }
 )
 
-from models import Models, Model
-
-default_model = "GanymedeNil/text2vec-large-chinese"
+from models import Models, Model, default_model
 
 
 def get_model(model_name) -> Union[Model, None]:
     if not model_name:
         model_name = default_model
 
-    if model_name not in [m.MODEL_NAME for m in Models]:
-        Models.append(Model(model_name))
+    if model_name not in Models:
+        Models[model_name] = Model(model_name)
 
-    for m in Models:
-        if m.MODEL_NAME == model_name:
-            return m
-    return None
+    return Models[model_name]
 
 
 class ModelServer(QqsimService):

@@ -6,6 +6,8 @@ import numpy
 import torch
 from sentence_transformers import SentenceTransformer
 
+default_model = "GanymedeNil/text2vec-large-chinese"
+
 
 class Model:
     def __init__(self, model_name):
@@ -44,10 +46,11 @@ class Model:
         return numpy.sum(numpy.square(numpy.array(x) - numpy.array(y)))
 
 
-Models = [
-    Model("GanymedeNil/text2vec-large-chinese")
-]
+Models = {
+    default_model: Model(default_model)
+}
 
 if __name__ == '__main__':
-    result = Models[0].fvec_L2sqr(Models[0].embedding("柳树是黄色的吧"), Models[0].embedding("柳树为什么是黄色的呢"))
+    result = Models[default_model].fvec_L2sqr(Models[default_model].embedding("柳树是黄色的吧"),
+                                              Models[default_model].embedding("柳树为什么是黄色的呢"))
     print(result)
