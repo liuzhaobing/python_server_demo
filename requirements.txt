@@ -1,7 +1,7 @@
-protobuf==3.19.4
-grpcio==1.47.0
-grpcio-tools==1.44.0
+protobuf~=3.19.5
+grpcio~=1.53.0
+grpcio-tools~=1.44.0
 Flask~=2.2.3
-gevent~=22.10.2
+gevent~=23.9.0
 sentence_transformers
 grpc_interceptor
